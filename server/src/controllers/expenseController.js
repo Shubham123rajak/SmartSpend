@@ -84,8 +84,10 @@ export async function parseExpense(request, response, next) {
     }
 
     const expense = await parseExpenseText(text);
+    console.log(expense)
     return response.json({ expense });
   } catch (error) {
     next(error);
   }
 }
+

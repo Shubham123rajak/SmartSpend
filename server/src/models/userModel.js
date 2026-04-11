@@ -1,5 +1,6 @@
 import { pool } from "../config/db.js";
 
+
 export async function createUser({ name, email, password }) {
   const query = `
     INSERT INTO users (name, email, password)

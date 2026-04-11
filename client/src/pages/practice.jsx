@@ -348,3 +348,26 @@ function AiDashboard() {
 export default AiDashboard;
 
 */
+
+graph = StateGraph(ExpenseTextRequest)
+
+graph.add_node('parsedText',parsedText)
+
+graph.add_edge(START,'parsedText')
+graph.add_edge('parsedText',END)
+
+parsed = graph.compile()
+
+output = parsed("Spend 1000 on gas Cylender")
+
+print(output)
+
+def parsedText(text : str) -> ParsedExpense:
+    '''Convert this text into structured output amount, category, title, date'''
+    structureOutput = structured_llm(text)
+    return structureOutput
+
+parseExpenseText("spend 30 rupees on milk")
+  .then(console.log)
+  .catch(console.error);
+    

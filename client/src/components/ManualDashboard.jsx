@@ -56,7 +56,7 @@ function ManualDashboard() {
   };
 
   return (
-    <div className="stack">
+    <div className="dashboard-grid">
       <section className="stack panel">
         <div>
           <h2>Add Expense</h2>

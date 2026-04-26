@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { expenseService } from "../services/expenseService";
 
-const categories = ["Food", "Transport", "Shopping", "Bills", "Misc"];
+const categories = ["Food", "Transportation", "Housing", "Utilities", "Entertainment", "Shopping", "Health", "Education",
+  "Travel", "Personal Care", "Bills", "Groceries", "Subscriptions", "Investments", "Gifts", "Misc" ];
 
 function createMessage(role, content, expenseDraft = null) {
   return {
@@ -10,6 +11,40 @@ function createMessage(role, content, expenseDraft = null) {
     content,
     expenseDraft,
     saved: false,
+  };
+}
+
+function formatSummaryMessage(summary = {}, filters = {}) {
+  const totalAmount = summary?.total_amount ?? "0.00";
+  const expenseCount = summary?.expense_count ?? 0;
+  const startDate = filters?.start_date ?? "the selected start date";
+  const endDate = filters?.end_date ?? "the selected end date";
+  const category = filters?.category ?? "";
+
+  // if (category == "ALL"){
+  //   return `Your total expense category wise are:
+  //   ${summary.map((summary)=>{
+      
+  //   })}
+  //   `
+  // }
+
+  if (expenseCount === 0) {
+    return `I could not find any expenses between ${startDate} and ${endDate}.`;
+  }
+
+  return `You spent Rs. ${totalAmount} across ${expenseCount} expenses in ${category} between ${startDate} and ${endDate}.`;
+}
+
+function buildExpenseDraftFromResponse(data) {
+  const expense = data?.expense ?? {};
+
+  return {
+    intent: data?.intent ?? "CREATE_EXPENSE",
+    amount: expense.amount ?? "",
+    category: categories.includes(expense.category) ? expense.category : "Misc",
+    title: expense.title ?? "General Expense",
+    date: expense.date ?? new Date().toISOString().split("T")[0],
   };
 }
 
@@ -57,12 +92,20 @@ function AiDashboard() {
 
     try {
       const data = await expenseService.parseExpense(text);
-      const parsedExpense = {
-        amount: data.expense.amount ?? "",
-        category: categories.includes(data.expense.category) ? data.expense.category : "Misc",
-        title: data.expense.title ?? "General Expense",
-        date: new Date().toISOString().split("T")[0],
-      };
+      const intent = data?.intent ?? "CREATE_EXPENSE";
+
+      if (intent === "QUERY_EXPENSE") {
+        setMessages((current) => [
+          ...current,
+          createMessage(
+            "bot",
+            formatSummaryMessage(data?.summary, data?.filters)
+          ),
+        ]);
+        return;
+      }
+
+      const parsedExpense = buildExpenseDraftFromResponse(data);
 
       setMessages((current) => [
         ...current,

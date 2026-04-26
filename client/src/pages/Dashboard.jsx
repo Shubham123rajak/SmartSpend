@@ -12,7 +12,7 @@ function Dashboard() {
   };
 
   return (
-    <div className="page-shell">
+    <div>
       <div className="card stack dashboard-card">
         <div className="toolbar dashboard-toolbar">
           <div>

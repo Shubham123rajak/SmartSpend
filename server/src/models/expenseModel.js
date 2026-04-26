@@ -40,3 +40,42 @@ export async function deleteExpenseRecord(id, userId) {
   const result = await pool.query(query, [id, userId]);
   return result.rows[0];
 }
+
+export async function getExpenseSummaryByDateRange(userId, category, startDate, endDate) {
+  let query = `
+SELECT
+  COUNT(*)::int AS expense_count,
+  COALESCE(SUM(amount),0)::numeric(10,2) AS total_amount,
+  MIN(date) AS first_expense_date,
+  MAX(date) AS last_expense_date
+FROM expenses
+WHERE user_id = $1
+  AND date >= $2
+  AND date <= $3
+`;
+
+  let params = [userId, startDate, endDate];
+
+  if (category != null) {
+    query = `
+  SELECT
+    category,
+    COUNT(*)::int AS expense_count,
+    COALESCE(SUM(amount),0)::numeric(10,2) AS total_amount,
+    MIN(date) AS first_expense_date,
+    MAX(date) AS last_expense_date
+  FROM expenses
+  WHERE user_id = $1
+    AND category = $2
+    AND date >= $3
+    AND date <= $4
+  GROUP BY category
+  `;
+
+    params = [userId, category, startDate, endDate];
+
+  }
+
+  const result = await pool.query(query, params);
+  return result.rows[0];
+}

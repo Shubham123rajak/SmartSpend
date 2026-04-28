@@ -11,15 +11,27 @@ export async function createExpenseRecord({ userId, amount, category, title, dat
   return result.rows[0];
 }
 
-export async function getExpensesByUserId(userId) {
-  const query = `
+export async function getExpensesByUserId(userId, startDate = null, endDate = null) {
+  let query = `
     SELECT id, amount, category, title, date
     FROM expenses
     WHERE user_id = $1
-    ORDER BY date DESC, id DESC
   `;
+  const params = [userId];
 
-  const result = await pool.query(query, [userId]);
+  if (startDate) {
+    query += "\n    AND date >= $2";
+    params.push(startDate);
+  }
+
+  if (endDate) {
+    query += `\n    AND date <= $${params.length + 1}`;
+    params.push(endDate);
+  }
+
+  query += "\n    ORDER BY date DESC, id DESC";
+
+  const result = await pool.query(query, params);
   return result.rows;
 }
 

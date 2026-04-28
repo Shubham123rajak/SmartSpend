@@ -40,7 +40,7 @@ function Login() {
 
   return (
     <div className="page-shell">
-      <div className="card auth-card stack">
+      <div className="card auth-card">
         <div>
           <h1>SmartSpend</h1>
           <p className="muted">Track, parse, and manage your expenses in one place.</p>

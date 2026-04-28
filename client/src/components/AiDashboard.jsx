@@ -4,6 +4,17 @@ import { expenseService } from "../services/expenseService";
 const categories = ["Food", "Transportation", "Housing", "Utilities", "Entertainment", "Shopping", "Health", "Education",
   "Travel", "Personal Care", "Bills", "Groceries", "Subscriptions", "Investments", "Gifts", "Misc" ];
 
+const expenseFilters = [
+  { label: "All", value: "all" },
+  { label: "This Month", value: "thisMonth" },
+  { label: "Last Week", value: "lastWeek" },
+  { label: "Last Month", value: "lastMonth" },
+];
+
+function calculateTotalExpense(expenses = []) {
+  return expenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+}
+
 function createMessage(role, content, expenseDraft = null) {
   return {
     id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -59,11 +70,13 @@ function AiDashboard() {
   const [draftText, setDraftText] = useState("");
   const [savingId, setSavingId] = useState("");
   const [error, setError] = useState("");
+  const [expenseRange, setExpenseRange] = useState("all");
   const messagesEndRef = useRef(null);
+  const totalExpense = calculateTotalExpense(expenses);
 
   const loadExpenses = async () => {
     try {
-      const data = await expenseService.getExpenses();
+      const data = await expenseService.getExpenses(expenseRange);
       setExpenses(data.expenses);
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Failed to load expenses");
@@ -72,7 +85,7 @@ function AiDashboard() {
 
   useEffect(() => {
     loadExpenses();
-  }, []);
+  }, [expenseRange]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -270,8 +283,24 @@ function AiDashboard() {
       </section>
 
       <section className="stack panel">
-        <div>
+        <div className="toolbar">
           <h2>Latest Expenses</h2>
+          <div className="filter-group" role="tablist" aria-label="Expense range">
+            {expenseFilters.map((filter) => (
+              <button
+                key={filter.value}
+                className={`button secondary filter-button ${expenseRange === filter.value ? "active" : ""}`}
+                onClick={() => setExpenseRange(filter.value)}
+                type="button"
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+          <div className="expense-total-row">
+            <span className="muted">Total for selected filter</span>
+            <strong>Rs. {totalExpense.toFixed(2)}</strong>
+          </div>
           <p className="muted">Your saved expenses update here after each AI confirmation.</p>
         </div>
 

@@ -8,14 +8,27 @@ const defaultForm = {
   date: "",
 };
 
+const expenseFilters = [
+  { label: "All", value: "all" },
+  { label: "This Month", value: "thisMonth" },
+  { label: "Last Week", value: "lastWeek" },
+  { label: "Last Month", value: "lastMonth" },
+];
+
+function calculateTotalExpense(expenses = []) {
+  return expenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+}
+
 function ManualDashboard() {
   const [expenses, setExpenses] = useState([]);
   const [form, setForm] = useState(defaultForm);
   const [error, setError] = useState("");
+  const [expenseRange, setExpenseRange] = useState("all");
+  const totalExpense = calculateTotalExpense(expenses);
 
   const loadExpenses = async () => {
     try {
-      const data = await expenseService.getExpenses();
+      const data = await expenseService.getExpenses(expenseRange);
       setExpenses(data.expenses);
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Failed to load expenses");
@@ -24,7 +37,7 @@ function ManualDashboard() {
 
   useEffect(() => {
     loadExpenses();
-  }, []);
+  }, [expenseRange]);
 
   const handleChange = (event) => {
     setForm((current) => ({
@@ -99,8 +112,24 @@ function ManualDashboard() {
       </section>
 
       <section className="stack panel">
-        <div>
+        <div className="toolbar">
           <h2>Recent Expenses</h2>
+          <div className="filter-group" role="tablist" aria-label="Expense range">
+            {expenseFilters.map((filter) => (
+              <button
+                key={filter.value}
+                className={`button secondary filter-button ${expenseRange === filter.value ? "active" : ""}`}
+                onClick={() => setExpenseRange(filter.value)}
+                type="button"
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+          <div className="expense-total-row">
+            <span className="muted">Total for selected filter</span>
+            <strong>Rs. {totalExpense.toFixed(2)}</strong>
+          </div>
           <p className="muted">Review or remove your latest manual entries.</p>
         </div>
 

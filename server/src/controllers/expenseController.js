@@ -25,6 +25,61 @@ function normalizeParsedExpense(rawExpense = {}) {
   };
 }
 
+function formatDateForQuery(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getExpenseFilterRange(range) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (range === "lastWeek") {
+    const currentDay = today.getDay();
+    const daysSinceMonday = currentDay === 0 ? 6 : currentDay - 1;
+    const currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() - daysSinceMonday);
+
+    const lastWeekStart = new Date(currentWeekStart);
+    lastWeekStart.setDate(currentWeekStart.getDate() - 7);
+
+    const lastWeekEnd = new Date(currentWeekStart);
+    lastWeekEnd.setDate(currentWeekStart.getDate() - 1);
+
+    return {
+      startDate: formatDateForQuery(lastWeekStart),
+      endDate: formatDateForQuery(lastWeekEnd),
+    };
+  }
+
+  if (range === "lastMonth") {
+    const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+
+    return {
+      startDate: formatDateForQuery(lastMonthStart),
+      endDate: formatDateForQuery(lastMonthEnd),
+    };
+  }
+
+  if (range === "thisMonth") {
+    const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    return {
+      startDate: formatDateForQuery(thisMonthStart),
+      endDate: formatDateForQuery(thisMonthEnd),
+    };
+  }
+
+  return {
+    startDate: null,
+    endDate: null,
+  };
+}
+
 export async function createExpense(request, response, next) {
   try {
     const { amount, category, title, date } = request.body;
@@ -49,7 +104,9 @@ export async function createExpense(request, response, next) {
 
 export async function getExpenses(request, response, next) {
   try {
-    const expenses = await getExpensesByUserId(request.user.id);
+    const range = request.query.range ?? "all";
+    const { startDate, endDate } = getExpenseFilterRange(range);
+    const expenses = await getExpensesByUserId(request.user.id, startDate, endDate);
     return response.json({ expenses });
   } catch (error) {
     next(error);

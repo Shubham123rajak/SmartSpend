@@ -1,8 +1,10 @@
 import api from "./api";
 
 export const expenseService = {
-  getExpenses: async () => {
-    const response = await api.get("/expenses");
+  getExpenses: async (range = "all") => {
+    const response = await api.get("/expenses", {
+      params: { range },
+    });
     return response.data;
   },
   createExpense: async (payload) => {
